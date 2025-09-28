@@ -1,3 +1,5 @@
+import java.util.concurrent.TimeUnit;
+
 public class Metrics {
     private int total = 0;
     private int success = 0;
@@ -9,6 +11,8 @@ public class Metrics {
     private long uptimeMs = 0;
     private long downtimeMs = 0;
     private static final int REPAIR_MS = 200; 
+
+    private static final long MS_PER_DAY = TimeUnit.DAYS.toMillis(1);
 
     public long now() {
         clockMs += 10;
@@ -33,14 +37,28 @@ public class Metrics {
         if (uptimeMs >= REPAIR_MS) uptimeMs -= REPAIR_MS;
     }
 
+    // Probability of Failure on Demand
     public double getPOFOD() {
         return total == 0 ? 0.0 : (double) systemFailures / total;
     }
 
-    public double getROCOF() {
-        return getPOFOD();
+    // ROCOF عام: أعطال لكل وحدة زمنية (كعدد صحيح، مع التقريب)
+    public int getROCOF(TimeUnit unit) {
+        long elapsedMs = uptimeMs + downtimeMs;
+        if (elapsedMs == 0) return 0;
+        double failuresPerMs = (double) systemFailures / (double) elapsedMs;
+        long unitMs = unit.toMillis(1);
+        return (int) Math.round(failuresPerMs * unitMs);
     }
 
+    // ROCOF لليوم: أعطال/يوم (int)
+    public int getROCOFPerDay() {
+        long elapsedMs = uptimeMs + downtimeMs;
+        if (elapsedMs == 0) return 0;
+        return (int) Math.round(((double) systemFailures / (double) elapsedMs) * MS_PER_DAY);
+    }
+
+    // Availability = uptime / (uptime + downtime)
     public double getAvailability() {
         long denom = uptimeMs + downtimeMs;
         return denom == 0 ? 1.0 : (double) uptimeMs / denom;
@@ -58,7 +76,7 @@ public class Metrics {
              + "User Errors (invalid): " + userErrors + "\n"
              + "System Failures: " + systemFailures + "\n"
              + String.format("POFOD (system-only): %.4f%n", getPOFOD())
-             + String.format("ROCOF (system-only): %.4f%n", getROCOF())
+             + String.format("ROCOF: %d/day%n", getROCOFPerDay())
              + String.format("Availability: %.5f%%%n", getAvailability() * 100.0);
     }
 }
