@@ -41,19 +41,11 @@ public class Metrics {
         return total == 0 ? 0.0 : (double) systemFailures / total;
     }
 
-    public int getROCOF(TimeUnit unit) {
-        long elapsedMs = uptimeMs + downtimeMs;
-        if (elapsedMs == 0) return 0;
-        double failuresPerMs = (double) systemFailures / (double) elapsedMs;
-        long unitMs = unit.toMillis(1);
-        return (int) Math.round(failuresPerMs * unitMs);
+    public int getROCOF() {
+        return getTotalRequests()-getTotalSuccess()-getUserErrors();
     }
 
-    public int getROCOFPerDay() {
-        long elapsedMs = uptimeMs + downtimeMs;
-        if (elapsedMs == 0) return 0;
-        return (int) Math.round(((double) systemFailures / (double) elapsedMs) * MS_PER_DAY);
-    }
+    
 
     public double getAvailability() {
         long denom = uptimeMs + downtimeMs;
@@ -72,7 +64,7 @@ public class Metrics {
              + "User Errors (invalid): " + userErrors + "\n"
              + "System Failures: " + systemFailures + "\n"
              + String.format("POFOD (system-only): %.4f%n", getPOFOD())
-             + String.format("ROCOF: %d/day%n", getROCOFPerDay())
+             + "ROCOF: " + getROCOF() + "\n"
              + String.format("Availability: %.5f%%%n", getAvailability() * 100.0);
     }
 }
