@@ -37,12 +37,10 @@ public class Metrics {
         if (uptimeMs >= REPAIR_MS) uptimeMs -= REPAIR_MS;
     }
 
-    // Probability of Failure on Demand
     public double getPOFOD() {
         return total == 0 ? 0.0 : (double) systemFailures / total;
     }
 
-    // ROCOF عام: أعطال لكل وحدة زمنية (كعدد صحيح، مع التقريب)
     public int getROCOF(TimeUnit unit) {
         long elapsedMs = uptimeMs + downtimeMs;
         if (elapsedMs == 0) return 0;
@@ -51,14 +49,12 @@ public class Metrics {
         return (int) Math.round(failuresPerMs * unitMs);
     }
 
-    // ROCOF لليوم: أعطال/يوم (int)
     public int getROCOFPerDay() {
         long elapsedMs = uptimeMs + downtimeMs;
         if (elapsedMs == 0) return 0;
         return (int) Math.round(((double) systemFailures / (double) elapsedMs) * MS_PER_DAY);
     }
 
-    // Availability = uptime / (uptime + downtime)
     public double getAvailability() {
         long denom = uptimeMs + downtimeMs;
         return denom == 0 ? 1.0 : (double) uptimeMs / denom;
